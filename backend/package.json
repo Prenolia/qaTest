@@ -1,0 +1,17 @@
+{
+  "name": "qa-testbed-backend",
+  "version": "1.0.0",
+  "description": "QA Testbed Backend API with Bun and Elysia",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch src/index.ts",
+    "start": "bun run src/index.ts"
+  },
+  "dependencies": {
+    "elysia": "^1.0.0",
+    "@elysiajs/cors": "^1.0.0"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}
