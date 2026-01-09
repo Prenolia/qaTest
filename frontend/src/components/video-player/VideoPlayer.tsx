@@ -34,6 +34,8 @@ interface YTPlayer {
   getCurrentTime: () => number
   getDuration: () => number
   getPlayerState: () => number
+  getPlaybackRate: () => number
+  setPlaybackRate: (rate: number) => void
   destroy: () => void
 }
 
@@ -127,7 +129,9 @@ export function VideoPlayer({
   const [duration, setDuration] = useState(0)
   const [volume, setVolume] = useState(80)
   const [isMuted, setIsMuted] = useState(false)
-  const [videoId, setVideoId] = useState<string | null>(null)
+  const [playbackRate, setPlaybackRate] = useState(1)
+
+  const playbackRates = [1, 1.5, 2]
 
   // Initialize player
   useEffect(() => {
@@ -138,7 +142,6 @@ export function VideoPlayer({
       return
     }
 
-    setVideoId(id)
     setError(null)
     setIsReady(false)
     setIsPlaying(false)
@@ -285,6 +288,15 @@ export function VideoPlayer({
     }
   }, [])
 
+  const handlePlaybackRateChange = useCallback(() => {
+    if (!playerRef.current) return
+    const currentIndex = playbackRates.indexOf(playbackRate)
+    const nextIndex = (currentIndex + 1) % playbackRates.length
+    const newRate = playbackRates[nextIndex]
+    playerRef.current.setPlaybackRate(newRate)
+    setPlaybackRate(newRate)
+  }, [playbackRate, playbackRates])
+
   const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0
 
   return (
@@ -353,6 +365,14 @@ export function VideoPlayer({
                 onValueChange={handleVolumeChange}
                 className="w-24 cursor-pointer"
               />
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePlaybackRateChange}
+                className="min-w-[3rem] text-xs font-medium"
+              >
+                {playbackRate}x
+              </Button>
               <Button variant="ghost" size="icon" onClick={handleFullscreen}>
                 <Maximize className="h-4 w-4" />
               </Button>
