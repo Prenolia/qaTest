@@ -6,6 +6,7 @@ function Users() {
   const [users, setUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [successMessage, setSuccessMessage] = useState(null)
   const [editingUser, setEditingUser] = useState(null)
   const [showAddForm, setShowAddForm] = useState(false)
   const [formData, setFormData] = useState({ name: '', email: '', role: 'User' })
@@ -41,12 +42,16 @@ function Users() {
       })
       const data = await response.json()
       if (data.success) {
+        setSuccessMessage('User deleted successfully')
+        setTimeout(() => setSuccessMessage(null), 3000)
         fetchUsers()
       } else {
-        alert('Failed to delete user')
+        setError('Failed to delete user')
+        setTimeout(() => setError(null), 3000)
       }
     } catch (err) {
-      alert('Error deleting user')
+      setError('Error deleting user')
+      setTimeout(() => setError(null), 3000)
     }
   }
 
@@ -66,12 +71,16 @@ function Users() {
       if (data.success) {
         setEditingUser(null)
         setFormData({ name: '', email: '', role: 'User' })
+        setSuccessMessage('User updated successfully')
+        setTimeout(() => setSuccessMessage(null), 3000)
         fetchUsers()
       } else {
-        alert('Failed to update user')
+        setError('Failed to update user')
+        setTimeout(() => setError(null), 3000)
       }
     } catch (err) {
-      alert('Error updating user')
+      setError('Error updating user')
+      setTimeout(() => setError(null), 3000)
     }
   }
 
@@ -87,12 +96,16 @@ function Users() {
       if (data.success) {
         setShowAddForm(false)
         setFormData({ name: '', email: '', role: 'User' })
+        setSuccessMessage('User added successfully')
+        setTimeout(() => setSuccessMessage(null), 3000)
         fetchUsers()
       } else {
-        alert('Failed to add user')
+        setError('Failed to add user')
+        setTimeout(() => setError(null), 3000)
       }
     } catch (err) {
-      alert('Error adding user')
+      setError('Error adding user')
+      setTimeout(() => setError(null), 3000)
     }
   }
 
@@ -123,6 +136,14 @@ function Users() {
         <p style={{ marginBottom: '1rem' }}>
           This page demonstrates a data table with CRUD operations (Create, Read, Update, Delete).
         </p>
+        
+        {successMessage && (
+          <div className="alert alert-success">{successMessage}</div>
+        )}
+        
+        {error && !loading && (
+          <div className="alert alert-error">{error}</div>
+        )}
         
         <button 
           className="button button-success" 
@@ -213,7 +234,7 @@ function Users() {
                       <option value="Admin">Admin</option>
                     </select>
                   ) : (
-                    <span className={`badge badge-${user.role.toLowerCase()}`}>
+                    <span className={`badge badge-${user.role.toLowerCase().replace(/\s+/g, '-')}`}>
                       {user.role}
                     </span>
                   )}

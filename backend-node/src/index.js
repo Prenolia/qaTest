@@ -151,7 +151,9 @@ app.post("/api/validate", (req, res) => {
   const data = req.body;
   const errors = {};
 
-  if (!data.email || !data.email.includes("@")) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  
+  if (!data.email || !emailRegex.test(data.email)) {
     errors.email = "Valid email is required";
   }
   if (!data.name || data.name.length < 2) {
