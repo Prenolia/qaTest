@@ -1,0 +1,150 @@
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
+
+export class ApiError extends Error {
+  status: number
+  body: string
+
+  constructor(status: number, body: string) {
+    super(`API Error: ${status}`)
+    this.status = status
+    this.body = body
+    this.name = 'ApiError'
+  }
+}
+
+export async function apiRequest<T>(
+  endpoint: string,
+  options?: RequestInit
+): Promise<T> {
+  const requestId = crypto.randomUUID()
+
+  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Request-ID': requestId,
+      ...options?.headers,
+    },
+  })
+
+  if (!response.ok) {
+    throw new ApiError(response.status, await response.text())
+  }
+
+  return response.json()
+}
+
+// User types
+export type UserStatus = 'active' | 'inactive' | 'pending'
+export type UserRole = 'User' | 'Manager' | 'Admin'
+
+export interface User {
+  id: string
+  name: string
+  email: string
+  role: UserRole
+  status: UserStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface UsersResponse {
+  items: User[]
+  page: number
+  pageSize: number
+  total: number
+  totalPages: number
+}
+
+export interface UsersParams {
+  page?: number
+  pageSize?: number
+  search?: string
+  sortBy?: 'name' | 'email' | 'updatedAt'
+  sortDir?: 'asc' | 'desc'
+  status?: UserStatus
+  role?: UserRole
+}
+
+export interface CreateUserDTO {
+  name: string
+  email: string
+  role?: UserRole
+  status?: UserStatus
+}
+
+export interface UpdateUserDTO {
+  name?: string
+  email?: string
+  role?: UserRole
+  status?: UserStatus
+}
+
+// API functions
+export const api = {
+  // Health
+  health: () => apiRequest<{ ok: boolean; ts: string; version: string }>('/api/health'),
+
+  // Users CRUD
+  getUsers: (params: UsersParams = {}) => {
+    const searchParams = new URLSearchParams()
+    if (params.page) searchParams.set('page', params.page.toString())
+    if (params.pageSize) searchParams.set('pageSize', params.pageSize.toString())
+    if (params.search) searchParams.set('search', params.search)
+    if (params.sortBy) searchParams.set('sortBy', params.sortBy)
+    if (params.sortDir) searchParams.set('sortDir', params.sortDir)
+    if (params.status) searchParams.set('status', params.status)
+    if (params.role) searchParams.set('role', params.role)
+    const query = searchParams.toString()
+    return apiRequest<UsersResponse>(`/api/users${query ? `?${query}` : ''}`)
+  },
+
+  getUser: (id: string) =>
+    apiRequest<{ success: boolean; data: User }>(`/api/users/${id}`),
+
+  createUser: (data: CreateUserDTO) =>
+    apiRequest<{ success: boolean; data: User }>('/api/users', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  updateUser: (id: string, data: UpdateUserDTO) =>
+    apiRequest<{ success: boolean; data: User }>(`/api/users/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    }),
+
+  deleteUser: (id: string) =>
+    apiRequest<{ success: boolean; message: string }>(`/api/users/${id}`, {
+      method: 'DELETE',
+    }),
+
+  resetData: () =>
+    apiRequest<{ success: boolean; message: string; userCount: number }>('/api/reset', {
+      method: 'POST',
+    }),
+
+  // Form validation
+  validateForm: (data: { name: string; email: string; role: string }) =>
+    apiRequest<{ success: boolean; message: string; data?: unknown; errors?: Record<string, string> }>('/api/validate', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
+
+  // Simulation endpoints
+  simulateSlow: () =>
+    apiRequest<{ success: boolean; delayMs: number; message: string }>('/api/slow'),
+
+  simulateUnreliable: () =>
+    apiRequest<{ success: boolean; message?: string; error?: string }>('/api/unreliable'),
+
+  simulateError: () =>
+    apiRequest<{ success: boolean; error: string; code: string }>('/api/error'),
+
+  simulateDelay: (ms: number) =>
+    apiRequest<{ success: boolean; delayMs: number; message: string }>(`/api/delay?ms=${ms}`),
+}
+
+export function getApiBaseUrl() {
+  return API_BASE_URL
+}

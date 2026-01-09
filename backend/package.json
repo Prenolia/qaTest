@@ -8,8 +8,9 @@
     "start": "bun run src/index.ts"
   },
   "dependencies": {
-    "elysia": "^1.0.0",
-    "@elysiajs/cors": "^1.0.0"
+    "@elysiajs/cors": "^1.0.0",
+    "@sinclair/typebox": "^0.34.47",
+    "elysia": "^1.0.0"
   },
   "devDependencies": {
     "bun-types": "latest"

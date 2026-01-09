@@ -1,176 +1,111 @@
-import { Elysia } from "elysia";
-import { cors } from "@elysiajs/cors";
+/**
+ * QA Testbed API Server
+ * Main entry point
+ *
+ * Architecture:
+ * - Controllers: Handle HTTP requests/responses with validation
+ * - Services: Single-action business logic
+ * - Repositories: Data access layer
+ * - Models: Data type definitions
+ */
 
-// In-memory data store for testing
-let users = [
-  { id: 1, name: "Alice Johnson", email: "alice@example.com", role: "Admin" },
-  { id: 2, name: "Bob Smith", email: "bob@example.com", role: "User" },
-  { id: 3, name: "Charlie Brown", email: "charlie@example.com", role: "User" },
-  { id: 4, name: "Diana Prince", email: "diana@example.com", role: "Manager" },
-  { id: 5, name: "Eve Anderson", email: "eve@example.com", role: "User" },
-];
+import { Elysia } from 'elysia';
+import { cors } from '@elysiajs/cors';
 
-let nextUserId = 6;
+import { config } from './config';
+import {
+  healthController,
+  userController,
+  formController,
+  simulationController,
+} from './controllers';
 
-const app = new Elysia()
-  .use(cors())
-  
-  // Health check endpoint
-  .get("/", () => ({
-    status: "ok",
-    message: "QA Testbed API is running",
-    timestamp: new Date().toISOString(),
-  }))
+/**
+ * Create and configure the Elysia application
+ */
+function createApp() {
+  const app = new Elysia()
+    // Enable CORS for frontend communication
+    .use(cors())
 
-  // GET all users
-  .get("/api/users", () => ({
-    success: true,
-    data: users,
-  }))
+    // Mount controllers
+    .use(healthController)
+    .use(userController)
+    .use(formController)
+    .use(simulationController)
 
-  // GET single user
-  .get("/api/users/:id", ({ params: { id } }) => {
-    const user = users.find((u) => u.id === parseInt(id));
-    if (!user) {
-      return {
-        success: false,
-        error: "User not found",
-      };
-    }
-    return {
-      success: true,
-      data: user,
-    };
-  })
-
-  // POST create user
-  .post("/api/users", async ({ body }) => {
-    const newUser = {
-      id: nextUserId++,
-      ...(body as any),
-    };
-    users.push(newUser);
-    return {
-      success: true,
-      data: newUser,
-    };
-  })
-
-  // PUT update user
-  .put("/api/users/:id", async ({ params: { id }, body }) => {
-    const index = users.findIndex((u) => u.id === parseInt(id));
-    if (index === -1) {
-      return {
-        success: false,
-        error: "User not found",
-      };
-    }
-    users[index] = { ...users[index], ...(body as any) };
-    return {
-      success: true,
-      data: users[index],
-    };
-  })
-
-  // DELETE user
-  .delete("/api/users/:id", ({ params: { id } }) => {
-    const index = users.findIndex((u) => u.id === parseInt(id));
-    if (index === -1) {
-      return {
-        success: false,
-        error: "User not found",
-      };
-    }
-    users.splice(index, 1);
-    return {
-      success: true,
-      message: "User deleted successfully",
-    };
-  })
-
-  // Endpoint with simulated latency (2-5 seconds delay)
-  .get("/api/slow", async () => {
-    const delay = Math.floor(Math.random() * 3000) + 2000; // 2-5 seconds
-    await new Promise((resolve) => setTimeout(resolve, delay));
-    return {
-      success: true,
-      message: `Response delayed by ${delay}ms`,
-      data: { delayed: delay },
-    };
-  })
-
-  // Endpoint that randomly returns errors (50% chance)
-  .get("/api/unreliable", () => {
-    const shouldFail = Math.random() > 0.5;
-    if (shouldFail) {
-      return {
-        success: false,
-        error: "Random error occurred",
-        code: "RANDOM_ERROR",
-      };
-    }
-    return {
-      success: true,
-      message: "Request succeeded",
-      data: { lucky: true },
-    };
-  })
-
-  // Endpoint that always returns 500 error
-  .get("/api/error", () => {
-    return {
-      success: false,
-      error: "Internal server error simulation",
-      code: "SIMULATED_ERROR",
+    // Root endpoint - API documentation
+    .get('/', () => ({
+      status: 'ok',
+      message: 'QA Testbed API is running',
+      version: config.api.version,
       timestamp: new Date().toISOString(),
-    };
-  })
+      endpoints: {
+        users: '/api/users',
+        validate: '/api/validate',
+        slow: '/api/slow',
+        unreliable: '/api/unreliable',
+        error: '/api/error',
+        delay: '/api/delay?ms=<time>',
+      },
+    }));
 
-  // Endpoint with configurable delay via query parameter
-  .get("/api/delay", async ({ query }) => {
-    const delay = parseInt((query as any).ms || "1000");
-    const maxDelay = Math.min(delay, 10000); // Cap at 10 seconds
-    await new Promise((resolve) => setTimeout(resolve, maxDelay));
-    return {
-      success: true,
-      message: `Delayed for ${maxDelay}ms`,
-      delay: maxDelay,
-    };
-  })
+  return app;
+}
 
-  // Form validation endpoint
-  .post("/api/validate", async ({ body }) => {
-    const data = body as any;
-    const errors: any = {};
+/**
+ * Start the server
+ */
+function startServer() {
+  const app = createApp();
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    
-    if (!data.email || !emailRegex.test(data.email)) {
-      errors.email = "Valid email is required";
-    }
-    if (!data.name || data.name.length < 2) {
-      errors.name = "Name must be at least 2 characters";
-    }
-    if (data.age && (data.age < 0 || data.age > 150)) {
-      errors.age = "Age must be between 0 and 150";
-    }
+  app.listen(config.server.port);
 
-    if (Object.keys(errors).length > 0) {
-      return {
-        success: false,
-        errors,
-      };
-    }
+  printStartupBanner();
 
-    return {
-      success: true,
-      message: "Validation passed",
-      data,
-    };
-  })
+  return app;
+}
 
-  .listen(3001);
+/**
+ * Print startup banner with endpoint information
+ */
+function printStartupBanner() {
+  const { port } = config.server;
+  const baseUrl = `http://localhost:${port}`;
 
-console.log(
-  `🚀 QA Testbed API is running at http://${app.server?.hostname}:${app.server?.port}`
-);
+  console.log(`
+╔══════════════════════════════════════════════════════════════════╗
+║                     QA Testbed API Server                        ║
+║                     Version ${config.api.version}                                ║
+╠══════════════════════════════════════════════════════════════════╣
+║  Server running at: ${baseUrl.padEnd(38)}      ║
+╠══════════════════════════════════════════════════════════════════╣
+║  Architecture:                                                   ║
+║    Controllers → Services → Repositories → Models                ║
+╠══════════════════════════════════════════════════════════════════╣
+║  CRUD Operations:                                                ║
+║    GET    /api/users          List all users                     ║
+║    GET    /api/users/:id      Get single user                    ║
+║    POST   /api/users          Create user                        ║
+║    PUT    /api/users/:id      Update user                        ║
+║    DELETE /api/users/:id      Delete user                        ║
+║                                                                  ║
+║  Test Endpoints:                                                 ║
+║    GET  /api/slow             Random 2-5 second delay            ║
+║    GET  /api/unreliable       50% chance of error                ║
+║    GET  /api/error            Always returns error               ║
+║    GET  /api/delay?ms=<time>  Configurable delay                 ║
+║    POST /api/validate         Form validation                    ║
+║                                                                  ║
+║  Utility:                                                        ║
+║    GET  /api/health           Health check                       ║
+║    POST /api/reset            Reset data                         ║
+╚══════════════════════════════════════════════════════════════════╝
+`);
+}
+
+// Start the server
+startServer();
+
+// Export for testing
+export { createApp };
