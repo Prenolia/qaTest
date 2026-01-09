@@ -1,0 +1,14 @@
+{
+  "name": "qa-testbed-backend-node",
+  "version": "1.0.0",
+  "description": "QA Testbed Backend API with Node.js and Express (alternative to Bun)",
+  "type": "module",
+  "scripts": {
+    "dev": "node --watch src/index.js",
+    "start": "node src/index.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}

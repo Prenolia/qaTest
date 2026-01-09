@@ -15,9 +15,13 @@ This testbed provides a realistic application environment for testing various QA
 
 ```
 qaTest/
-├── backend/          # Bun + Elysia API server
+├── backend/          # Bun + Elysia API server (primary)
 │   ├── src/
 │   │   └── index.ts  # Main API server
+│   └── package.json
+├── backend-node/     # Node.js + Express API server (alternative)
+│   ├── src/
+│   │   └── index.js  # Main API server
 │   └── package.json
 ├── frontend/         # React + Vite application
 │   ├── src/
@@ -37,10 +41,18 @@ qaTest/
 
 ### Running the Backend
 
+**Option 1: Bun + Elysia (Primary)**
 ```bash
 cd backend
 bun install
 bun run dev
+```
+
+**Option 2: Node.js + Express (Alternative)**
+```bash
+cd backend-node
+npm install
+npm run dev
 ```
 
 Backend will run on `http://localhost:3001`
