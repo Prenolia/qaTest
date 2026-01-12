@@ -15,10 +15,10 @@ import {
   CheckCircle,
   XCircle,
   Loader2,
-  RefreshCw,
   Timer,
 } from 'lucide-react'
 import { getApiBaseUrl } from '@/lib/api'
+import { logRequest } from '@/contexts/RequestHistoryContext'
 
 interface RequestResult {
   success: boolean
@@ -27,6 +27,7 @@ interface RequestResult {
   duration: number
   timestamp: string
   delayMs?: number
+  endpoint: string
 }
 
 interface EndpointState {
@@ -48,12 +49,6 @@ export default function Status() {
   const [unreliableState, setUnreliableState] = useState<EndpointState>(initialState)
   const [errorState, setErrorState] = useState<EndpointState>(initialState)
   const [delayState, setDelayState] = useState<EndpointState>(initialState)
-
-  const [requestHistory, setRequestHistory] = useState<RequestResult[]>([])
-
-  const addToHistory = (result: RequestResult) => {
-    setRequestHistory((prev) => [result, ...prev].slice(0, 10))
-  }
 
   // Test /api/slow - Random 2-5 second delay
   const testSlow = async () => {
@@ -79,10 +74,19 @@ export default function Status() {
         duration,
         timestamp: new Date().toISOString(),
         delayMs: data.delayMs,
+        endpoint: '/api/slow',
       }
 
       setSlowState({ loading: false, result, progress: 100 })
-      addToHistory(result)
+      logRequest({
+        method: 'GET',
+        endpoint: '/api/slow',
+        url: `${getApiBaseUrl()}/api/slow`,
+        status: response.status,
+        success: true,
+        duration,
+        responseBody: data,
+      })
     } catch (error) {
       const duration = Math.round(performance.now() - startTime)
       const result: RequestResult = {
@@ -90,10 +94,18 @@ export default function Status() {
         message: error instanceof Error ? error.message : 'Request failed',
         duration,
         timestamp: new Date().toISOString(),
+        endpoint: '/api/slow',
       }
 
       setSlowState({ loading: false, result, progress: 0 })
-      addToHistory(result)
+      logRequest({
+        method: 'GET',
+        endpoint: '/api/slow',
+        url: `${getApiBaseUrl()}/api/slow`,
+        success: false,
+        duration,
+        error: error instanceof Error ? error.message : 'Request failed',
+      })
     } finally {
       clearInterval(interval)
     }
@@ -118,10 +130,20 @@ export default function Status() {
           : (data.error || 'Request failed randomly'),
         duration,
         timestamp: new Date().toISOString(),
+        endpoint: '/api/unreliable',
       }
 
       setUnreliableState({ loading: false, result, progress: 100 })
-      addToHistory(result)
+      logRequest({
+        method: 'GET',
+        endpoint: '/api/unreliable',
+        url: `${getApiBaseUrl()}/api/unreliable`,
+        status: response.status,
+        success: response.ok,
+        duration,
+        responseBody: data,
+        error: response.ok ? undefined : data.error,
+      })
     } catch (error) {
       const duration = Math.round(performance.now() - startTime)
       const result: RequestResult = {
@@ -129,10 +151,18 @@ export default function Status() {
         message: error instanceof Error ? error.message : 'Request failed',
         duration,
         timestamp: new Date().toISOString(),
+        endpoint: '/api/unreliable',
       }
 
       setUnreliableState({ loading: false, result, progress: 0 })
-      addToHistory(result)
+      logRequest({
+        method: 'GET',
+        endpoint: '/api/unreliable',
+        url: `${getApiBaseUrl()}/api/unreliable`,
+        success: false,
+        duration,
+        error: error instanceof Error ? error.message : 'Request failed',
+      })
     }
   }
 
@@ -153,10 +183,20 @@ export default function Status() {
         message: data.error || `Error ${response.status}`,
         duration,
         timestamp: new Date().toISOString(),
+        endpoint: '/api/error',
       }
 
       setErrorState({ loading: false, result, progress: 100 })
-      addToHistory(result)
+      logRequest({
+        method: 'GET',
+        endpoint: '/api/error',
+        url: `${getApiBaseUrl()}/api/error`,
+        status: response.status,
+        success: response.ok,
+        duration,
+        responseBody: data,
+        error: data.error,
+      })
     } catch (error) {
       const duration = Math.round(performance.now() - startTime)
       const result: RequestResult = {
@@ -164,10 +204,18 @@ export default function Status() {
         message: error instanceof Error ? error.message : 'Request failed',
         duration,
         timestamp: new Date().toISOString(),
+        endpoint: '/api/error',
       }
 
       setErrorState({ loading: false, result, progress: 0 })
-      addToHistory(result)
+      logRequest({
+        method: 'GET',
+        endpoint: '/api/error',
+        url: `${getApiBaseUrl()}/api/error`,
+        success: false,
+        duration,
+        error: error instanceof Error ? error.message : 'Request failed',
+      })
     }
   }
 
@@ -196,10 +244,19 @@ export default function Status() {
         duration,
         timestamp: new Date().toISOString(),
         delayMs: data.delayMs,
+        endpoint: `/api/delay?ms=${ms}`,
       }
 
       setDelayState({ loading: false, result, progress: 100 })
-      addToHistory(result)
+      logRequest({
+        method: 'GET',
+        endpoint: `/api/delay?ms=${ms}`,
+        url: `${getApiBaseUrl()}/api/delay?ms=${ms}`,
+        status: response.status,
+        success: true,
+        duration,
+        responseBody: data,
+      })
     } catch (error) {
       const duration = Math.round(performance.now() - startTime)
       const result: RequestResult = {
@@ -207,10 +264,18 @@ export default function Status() {
         message: error instanceof Error ? error.message : 'Request failed',
         duration,
         timestamp: new Date().toISOString(),
+        endpoint: `/api/delay?ms=${ms}`,
       }
 
       setDelayState({ loading: false, result, progress: 0 })
-      addToHistory(result)
+      logRequest({
+        method: 'GET',
+        endpoint: `/api/delay?ms=${ms}`,
+        url: `${getApiBaseUrl()}/api/delay?ms=${ms}`,
+        success: false,
+        duration,
+        error: error instanceof Error ? error.message : 'Request failed',
+      })
     } finally {
       clearInterval(interval)
     }
@@ -405,58 +470,6 @@ export default function Status() {
           </CardContent>
         </Card>
       </div>
-
-      {/* Request History */}
-      {requestHistory.length > 0 && (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle className="text-lg">Request History</CardTitle>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setRequestHistory([])}
-              >
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Clear
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {requestHistory.map((result, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-4 p-3 rounded-lg bg-muted/50"
-                >
-                  {result.success ? (
-                    <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
-                  ) : (
-                    <XCircle className="h-4 w-4 text-red-500 shrink-0" />
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{result.message}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {new Date(result.timestamp).toLocaleTimeString()}
-                    </p>
-                  </div>
-                  <div className="text-right shrink-0">
-                    {result.status && (
-                      <Badge
-                        variant={result.success ? 'success' : 'destructive'}
-                        className="mb-1"
-                      >
-                        {result.status}
-                      </Badge>
-                    )}
-                    <p className="text-xs text-muted-foreground">{result.duration}ms</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* QA Scenarios */}
       <Card>

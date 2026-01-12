@@ -18,9 +18,9 @@ export function MainLayout({ children }: MainLayoutProps) {
   const location = useLocation()
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
+      {/* Header - Fixed at top */}
+      <header className="shrink-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         <div className="container mx-auto flex h-16 items-center px-4">
           <div className="mr-8 flex items-center space-x-3">
             <div className="h-9 w-9 rounded-lg bg-primary flex items-center justify-center">
@@ -57,13 +57,15 @@ export function MainLayout({ children }: MainLayoutProps) {
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="container mx-auto py-6 px-4">
-        {children}
+      {/* Main Content - Scrollable */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="container mx-auto py-6 px-4">
+          {children}
+        </div>
       </main>
 
-      {/* Footer */}
-      <footer className="border-t bg-white py-4 mt-auto">
+      {/* Footer - Fixed at bottom */}
+      <footer className="shrink-0 border-t bg-white py-4">
         <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
           QA Testbed - Built for testing React applications
         </div>

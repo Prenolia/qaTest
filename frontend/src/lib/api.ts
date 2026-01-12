@@ -1,3 +1,5 @@
+import { logRequest } from '@/contexts/RequestHistoryContext'
+
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
 export class ApiError extends Error {
@@ -17,21 +19,68 @@ export async function apiRequest<T>(
   options?: RequestInit
 ): Promise<T> {
   const requestId = crypto.randomUUID()
+  const method = options?.method || 'GET'
+  const startTime = performance.now()
+  const fullUrl = `${API_BASE_URL}${endpoint}`
 
-  const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Request-ID': requestId,
-      ...options?.headers,
-    },
-  })
-
-  if (!response.ok) {
-    throw new ApiError(response.status, await response.text())
+  let requestBody: unknown = undefined
+  if (options?.body) {
+    try {
+      requestBody = JSON.parse(options.body as string)
+    } catch {
+      requestBody = options.body
+    }
   }
 
-  return response.json()
+  try {
+    const response = await fetch(fullUrl, {
+      ...options,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Request-ID': requestId,
+        ...options?.headers,
+      },
+    })
+
+    const duration = Math.round(performance.now() - startTime)
+    const responseData = await response.json()
+
+    // Log the request
+    logRequest({
+      method,
+      endpoint,
+      url: fullUrl,
+      status: response.status,
+      success: response.ok,
+      duration,
+      requestBody,
+      responseBody: responseData,
+      error: response.ok ? undefined : responseData?.error || `HTTP ${response.status}`,
+    })
+
+    if (!response.ok) {
+      throw new ApiError(response.status, JSON.stringify(responseData))
+    }
+
+    return responseData as T
+  } catch (error) {
+    const duration = Math.round(performance.now() - startTime)
+
+    // Only log if not already logged (ApiError is thrown after logging)
+    if (!(error instanceof ApiError)) {
+      logRequest({
+        method,
+        endpoint,
+        url: fullUrl,
+        success: false,
+        duration,
+        requestBody,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      })
+    }
+
+    throw error
+  }
 }
 
 // User types
