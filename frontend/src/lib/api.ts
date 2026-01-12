@@ -1,4 +1,5 @@
 import { logRequest } from '@/contexts/RequestHistoryContext'
+import { applyNetworkSimulation } from '@/contexts/NetworkSimulationContext'
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001'
 
@@ -33,6 +34,9 @@ export async function apiRequest<T>(
   }
 
   try {
+    // Apply network simulation (delay, errors, etc.)
+    await applyNetworkSimulation()
+
     const response = await fetch(fullUrl, {
       ...options,
       headers: {
