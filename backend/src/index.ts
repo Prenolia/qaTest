@@ -104,8 +104,10 @@ function printStartupBanner() {
 `);
 }
 
-// Start the server
-startServer();
+// Start the server only if this file is run directly
+if (import.meta.main) {
+  startServer();
+}
 
 // Export for testing
 export { createApp };
