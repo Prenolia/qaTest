@@ -1,55 +1,13 @@
 import {
   createContext,
-  useContext,
   useCallback,
+  useContext,
   useRef,
   useState,
   type ReactNode,
-  type RefObject,
   type SyntheticEvent,
-} from 'react'
-
-interface VideoPlayerState {
-  url: string
-  isReady: boolean
-  isPlaying: boolean
-  error: string | null
-  currentTime: number
-  duration: number
-  volume: number
-  isMuted: boolean
-  playbackRate: number
-}
-
-interface VideoPlayerActions {
-  play: () => void
-  pause: () => void
-  togglePlay: () => void
-  seek: (percent: number) => void
-  seekTo: (seconds: number) => void
-  setVolume: (volume: number) => void
-  toggleMute: () => void
-  skipBack: () => void
-  skipForward: () => void
-  requestFullscreen: () => void
-  cyclePlaybackRate: () => void
-}
-
-interface VideoPlayerCallbacks {
-  handleReady: () => void
-  handlePlay: () => void
-  handlePause: () => void
-  handleTimeUpdate: (event: SyntheticEvent<HTMLVideoElement>) => void
-  handleDurationChange: (event: SyntheticEvent<HTMLVideoElement>) => void
-  handleError: () => void
-}
-
-interface VideoPlayerContextValue extends VideoPlayerState, VideoPlayerActions, VideoPlayerCallbacks {
-  playerRef: RefObject<HTMLVideoElement | null>
-  wrapperRef: RefObject<HTMLDivElement | null>
-  progressPercent: number
-  playbackRates: number[]
-}
+} from "react";
+import type { VideoPlayerContextValue } from "./types";
 
 const VideoPlayerContext = createContext<VideoPlayerContextValue | null>(null)
 

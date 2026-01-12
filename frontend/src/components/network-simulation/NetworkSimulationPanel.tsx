@@ -1,95 +1,47 @@
-import { useLocation } from 'react-router-dom'
-import { useNetworkSimulation, type SimulationMode } from '@/contexts/NetworkSimulationContext'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from '@/components/ui/popover'
-import {
-  Zap,
-  Clock,
-  Shuffle,
-  XCircle,
-  Settings2,
-  WifiOff,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
+} from "@/components/ui/popover";
+import { useNetworkSimulation } from "@/contexts/NetworkSimulationContext";
+import { cn } from "@/lib/utils";
+import { WifiOff, Zap } from "lucide-react";
+import { useLocation } from "react-router-dom";
 
-const simulationModes: {
-  mode: SimulationMode
-  label: string
-  description: string
-  icon: typeof Clock
-  color: string
-}[] = [
-  {
-    mode: 'none',
-    label: 'Normal',
-    description: 'No simulation',
-    icon: Zap,
-    color: 'text-green-600 bg-green-100',
-  },
-  {
-    mode: 'slow',
-    label: 'Slow',
-    description: '2-5s random delay',
-    icon: Clock,
-    color: 'text-blue-600 bg-blue-100',
-  },
-  {
-    mode: 'unreliable',
-    label: 'Unreliable',
-    description: '50% failure rate',
-    icon: Shuffle,
-    color: 'text-purple-600 bg-purple-100',
-  },
-  {
-    mode: 'error',
-    label: 'Error',
-    description: 'Always fails',
-    icon: XCircle,
-    color: 'text-red-600 bg-red-100',
-  },
-  {
-    mode: 'custom',
-    label: 'Custom',
-    description: 'Configure delay & error rate',
-    icon: Settings2,
-    color: 'text-orange-600 bg-orange-100',
-  },
-]
-
+import { SIMULATION_MODES } from "./constants";
 export function NetworkSimulationPanel() {
-  const location = useLocation()
-  const { settings, setMode, setCustomDelay, setErrorRate, isEnabled } = useNetworkSimulation()
+  const location = useLocation();
+  const { settings, setMode, setCustomDelay, setErrorRate, isEnabled } =
+    useNetworkSimulation();
 
-  const currentMode = simulationModes.find((m) => m.mode === settings.mode) || simulationModes[0]
-  const isOnUsersPage = location.pathname === '/users'
+  const currentMode =
+    SIMULATION_MODES.find((m) => m.mode === settings.mode) ||
+    SIMULATION_MODES[0];
+  const isOnUsersPage = location.pathname === "/users";
 
-  // Only show on /users page
   if (!isOnUsersPage) {
-    return null
+    return null;
   }
 
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
-          variant={isEnabled ? 'default' : 'outline'}
+          variant={isEnabled ? "default" : "outline"}
           size="sm"
           className={cn(
-            'fixed bottom-4 left-4 z-50 shadow-lg',
-            isEnabled && 'bg-orange-500 hover:bg-orange-600'
+            "fixed bottom-4 left-4 z-50 shadow-lg",
+            isEnabled && "bg-orange-500 hover:bg-orange-600"
           )}
         >
           {isEnabled ? (
-            <WifiOff className="h-4 w-4 mr-2" />
+            <WifiOff className="size-4 mr-2" />
           ) : (
-            <Zap className="h-4 w-4 mr-2" />
+            <Zap className="size-4 mr-2" />
           )}
           Network
           {isEnabled && (
@@ -109,46 +61,48 @@ export function NetworkSimulationPanel() {
           </div>
 
           <div className="space-y-2">
-            {simulationModes.map((item) => {
-              const Icon = item.icon
-              const isSelected = settings.mode === item.mode
+            {SIMULATION_MODES.map((item: (typeof SIMULATION_MODES)[0]) => {
+              const Icon = item.icon;
+              const isSelected = settings.mode === item.mode;
 
               return (
                 <button
                   key={item.mode}
                   onClick={() => setMode(item.mode)}
                   className={cn(
-                    'w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left',
+                    "w-full flex items-center gap-3 p-3 rounded-lg transition-colors text-left",
                     isSelected
-                      ? 'bg-primary text-primary-foreground'
-                      : 'hover:bg-muted'
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted"
                   )}
                 >
                   <div
                     className={cn(
-                      'h-8 w-8 rounded-md flex items-center justify-center',
-                      isSelected ? 'bg-white/20' : item.color
+                      "size-8 rounded-md flex items-center justify-center",
+                      isSelected ? "bg-white/20" : item.color
                     )}
                   >
-                    <Icon className="h-4 w-4" />
+                    <Icon className="size-4" />
                   </div>
                   <div className="flex-1">
                     <div className="font-medium text-sm">{item.label}</div>
                     <div
                       className={cn(
-                        'text-xs',
-                        isSelected ? 'text-primary-foreground/70' : 'text-muted-foreground'
+                        "text-xs",
+                        isSelected
+                          ? "text-primary-foreground/70"
+                          : "text-muted-foreground"
                       )}
                     >
                       {item.description}
                     </div>
                   </div>
                 </button>
-              )
+              );
             })}
           </div>
 
-          {settings.mode === 'custom' && (
+          {settings.mode === "custom" && (
             <div className="space-y-3 pt-2 border-t">
               <div className="space-y-2">
                 <Label htmlFor="delay-ms" className="text-sm">
@@ -158,7 +112,9 @@ export function NetworkSimulationPanel() {
                   id="delay-ms"
                   type="number"
                   value={settings.customDelayMs}
-                  onChange={(e) => setCustomDelay(parseInt(e.target.value) || 0)}
+                  onChange={(e) =>
+                    setCustomDelay(parseInt(e.target.value) || 0)
+                  }
                   min={0}
                   max={30000}
                 />
@@ -190,5 +146,5 @@ export function NetworkSimulationPanel() {
         </div>
       </PopoverContent>
     </Popover>
-  )
+  );
 }

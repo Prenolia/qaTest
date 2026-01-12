@@ -1,25 +1,16 @@
-import { Link, useLocation } from 'react-router-dom'
-import { cn } from '@/lib/utils'
-import { Home, Users, Video, FileText, Activity } from 'lucide-react'
-
-const navigation = [
-  { name: 'Home', href: '/', icon: Home },
-  { name: 'Users', href: '/users', icon: Users },
-  { name: 'Video', href: '/video', icon: Video },
-  { name: 'Form', href: '/form', icon: FileText },
-  { name: 'Status', href: '/status', icon: Activity },
-]
+import { cn } from "@/lib/utils";
+import { Link, useLocation } from "react-router-dom";
+import { NAVIGATION_ITEMS } from "./constants";
 
 interface MainLayoutProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
 export function MainLayout({ children }: MainLayoutProps) {
-  const location = useLocation()
+  const location = useLocation();
 
   return (
     <div className="h-screen flex flex-col bg-gray-50 overflow-hidden">
-      {/* Header - Fixed at top */}
       <header className="shrink-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
         <div className="container mx-auto flex h-16 items-center px-4">
           <div className="mr-8 flex items-center space-x-3">
@@ -34,9 +25,9 @@ export function MainLayout({ children }: MainLayoutProps) {
             </div>
           </div>
           <nav className="flex items-center space-x-1">
-            {navigation.map((item) => {
-              const Icon = item.icon
-              const isActive = location.pathname === item.href
+            {NAVIGATION_ITEMS.map((item) => {
+              const Icon = item.icon;
+              const isActive = location.pathname === item.href;
               return (
                 <Link
                   key={item.name}
@@ -51,7 +42,7 @@ export function MainLayout({ children }: MainLayoutProps) {
                   <Icon className="h-4 w-4" />
                   <span className="hidden sm:inline">{item.name}</span>
                 </Link>
-              )
+              );
             })}
           </nav>
         </div>
@@ -59,9 +50,7 @@ export function MainLayout({ children }: MainLayoutProps) {
 
       {/* Main Content - Scrollable */}
       <main className="flex-1 overflow-y-auto">
-        <div className="container mx-auto py-6 px-4">
-          {children}
-        </div>
+        <div className="container mx-auto py-6 px-4">{children}</div>
       </main>
 
       {/* Footer - Fixed at bottom */}
@@ -71,5 +60,5 @@ export function MainLayout({ children }: MainLayoutProps) {
         </div>
       </footer>
     </div>
-  )
+  );
 }
