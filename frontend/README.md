@@ -29,8 +29,8 @@ Test files should be placed alongside the source files with the `.test.ts` or `.
 src/
 ├── components/
 │   └── ui/
-│       ├── button.tsx
-│       └── button.test.tsx    # Unit test
+│       ├── button.vitest.tsx
+│       └── button.vitest.tsx    # Unit test
 ├── lib/
 │   ├── utils.ts
 │   └── utils.test.ts          # Unit test
